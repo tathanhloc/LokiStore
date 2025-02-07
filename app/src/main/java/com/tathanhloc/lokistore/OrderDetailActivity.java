@@ -23,6 +23,7 @@ public class OrderDetailActivity extends AppCompatActivity {
     private DatabaseManager dbManager;
     private Order currentOrder;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

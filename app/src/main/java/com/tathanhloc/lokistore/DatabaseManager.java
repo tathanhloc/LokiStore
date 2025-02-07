@@ -8,8 +8,10 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.tathanhloc.lokistore.models.Category;
+import com.tathanhloc.lokistore.models.CategoryStatistics;
 import com.tathanhloc.lokistore.models.Order;
 import com.tathanhloc.lokistore.models.OrderDetail;
+import com.tathanhloc.lokistore.models.OrderStatistics;
 import com.tathanhloc.lokistore.models.Product;
 
 import java.text.ParseException;
@@ -466,4 +468,155 @@ public List<Category> getAllCategories() {
             }
         }
     }
+    public int getTotalOrders() {
+        Cursor cursor = database.rawQuery("SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_ORDERS, null);
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+
+    public double getTotalRevenue() {
+        Cursor cursor = database.rawQuery("SELECT SUM(total_amount) FROM " + DatabaseHelper.TABLE_ORDERS, null);
+        double total = 0;
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
+    }
+
+    public List<OrderStatistics> getRevenueByDate() {
+        List<OrderStatistics> statistics = new ArrayList<>();
+        String query = "SELECT order_date, SUM(total_amount) as revenue " +
+                "FROM " + DatabaseHelper.TABLE_ORDERS +
+                " GROUP BY order_date ORDER BY order_date";
+
+        Cursor cursor = database.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String date = cursor.getString(0);
+                double revenue = cursor.getDouble(1);
+                statistics.add(new OrderStatistics(date, revenue));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return statistics;
+    }
+
+    public List<CategoryStatistics> getRevenueByCategory() {
+        List<CategoryStatistics> statistics = new ArrayList<>();
+        String query = "SELECT c.category_name, SUM(od.amount) as revenue " +
+                "FROM " + DatabaseHelper.TABLE_ORDER_DETAILS + " od " +
+                "JOIN " + DatabaseHelper.TABLE_PRODUCTS + " p ON od.product_id = p.product_id " +
+                "JOIN " + DatabaseHelper.TABLE_CATEGORIES + " c ON p.category_id = c.category_id " +
+                "GROUP BY c.category_id";
+
+        Cursor cursor = database.rawQuery(query, null);
+        if (cursor.moveToFirst()) {
+            do {
+                String categoryName = cursor.getString(0);
+                double revenue = cursor.getDouble(1);
+                statistics.add(new CategoryStatistics(categoryName, revenue));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return statistics;
+    }
+    public List<OrderStatistics> getRevenueByTimeRange(String startDate, String endDate, String groupBy) {
+        List<OrderStatistics> statistics = new ArrayList<>();
+        String query;
+
+        switch (groupBy) {
+            case "day":
+                // Thống kê theo ngày
+                query = "SELECT strftime('%d/%m/%Y', order_date) as date, SUM(total_amount) as revenue " +
+                        "FROM " + DatabaseHelper.TABLE_ORDERS +
+                        " WHERE order_date BETWEEN ? AND ? " +
+                        "GROUP BY order_date ORDER BY order_date";
+                break;
+            case "month":
+                // Thống kê theo tháng
+                query = "SELECT strftime('%m/%Y', order_date) as date, SUM(total_amount) as revenue " +
+                        "FROM " + DatabaseHelper.TABLE_ORDERS +
+                        " WHERE order_date BETWEEN ? AND ? " +
+                        "GROUP BY strftime('%m/%Y', order_date) " +
+                        "ORDER BY strftime('%Y-%m', order_date)";
+                break;
+            case "year":
+                // Thống kê theo năm
+                query = "SELECT strftime('%Y', order_date) as date, SUM(total_amount) as revenue " +
+                        "FROM " + DatabaseHelper.TABLE_ORDERS +
+                        " WHERE order_date BETWEEN ? AND ? " +
+                        "GROUP BY strftime('%Y', order_date) " +
+                        "ORDER BY date";
+                break;
+            default:
+                return statistics;
+        }
+
+        Cursor cursor = database.rawQuery(query, new String[]{startDate, endDate});
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                String date = cursor.getString(0);
+                double revenue = cursor.getDouble(1);
+                statistics.add(new OrderStatistics(date, revenue));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+
+        return statistics;
+    }
+    public double getTotalRevenueByTimeRange(String startDate, String endDate) {
+        String query = "SELECT SUM(total_amount) FROM " + DatabaseHelper.TABLE_ORDERS +
+                " WHERE order_date BETWEEN ? AND ?";
+
+        Cursor cursor = database.rawQuery(query, new String[]{startDate, endDate});
+        double total = 0;
+        if (cursor.moveToFirst()) {
+            total = cursor.getDouble(0);
+        }
+        cursor.close();
+        return total;
+    }
+    public int getTotalOrdersByTimeRange(String startDate, String endDate) {
+        String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_ORDERS +
+                " WHERE order_date BETWEEN ? AND ?";
+
+        Cursor cursor = database.rawQuery(query, new String[]{startDate, endDate});
+        int count = 0;
+        if (cursor.moveToFirst()) {
+            count = cursor.getInt(0);
+        }
+        cursor.close();
+        return count;
+    }
+    public List<CategoryStatistics> getCategoryRevenueByTimeRange(String startDate, String endDate) {
+        List<CategoryStatistics> statistics = new ArrayList<>();
+
+        String query = "SELECT c.category_name, SUM(od.amount) as revenue " +
+                "FROM " + DatabaseHelper.TABLE_ORDER_DETAILS + " od " +
+                "JOIN " + DatabaseHelper.TABLE_ORDERS + " o ON od.order_id = o.order_id " +
+                "JOIN " + DatabaseHelper.TABLE_PRODUCTS + " p ON od.product_id = p.product_id " +
+                "JOIN " + DatabaseHelper.TABLE_CATEGORIES + " c ON p.category_id = c.category_id " +
+                "WHERE o.order_date BETWEEN ? AND ? " +
+                "GROUP BY c.category_id, c.category_name " +
+                "ORDER BY revenue DESC";
+
+        Cursor cursor = database.rawQuery(query, new String[]{startDate, endDate});
+
+        if (cursor.moveToFirst()) {
+            do {
+                String categoryName = cursor.getString(0);
+                double revenue = cursor.getDouble(1);
+                statistics.add(new CategoryStatistics(categoryName, revenue));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        return statistics;
+    }
+
 }
