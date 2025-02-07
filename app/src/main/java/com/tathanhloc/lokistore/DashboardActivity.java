@@ -61,6 +61,15 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
+        cardOrders.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(DashboardActivity.this, OrderListActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
     }
 }
 

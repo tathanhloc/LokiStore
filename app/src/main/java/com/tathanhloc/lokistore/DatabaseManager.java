@@ -5,12 +5,19 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.tathanhloc.lokistore.models.Category;
+import com.tathanhloc.lokistore.models.Order;
+import com.tathanhloc.lokistore.models.OrderDetail;
 import com.tathanhloc.lokistore.models.Product;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class DatabaseManager {
     private DatabaseHelper dbHelper;
@@ -270,4 +277,193 @@ public List<Category> getAllCategories() {
         return null;
     }
 
+    // Phương thức xử lý Orders
+    public long addOrder(Order order) {
+        ContentValues values = new ContentValues();
+        values.put("order_code", order.getOrderCode());
+        values.put("user_id", order.getUserId());
+        values.put("order_date", order.getOrderDate());
+        values.put("delivery_date", order.getDeliveryDate());
+        values.put("total_amount", order.getTotalAmount());
+        values.put("note", order.getNote());
+
+        return database.insert(DatabaseHelper.TABLE_ORDERS, null, values);
+    }
+    public boolean updateOrder(Order order) {
+        // Kiểm tra xem đơn hàng có phải là đơn hàng trong ngày không
+        if (!isOrderEditable(order.getOrderDate())) {
+            return false;
+        }
+
+        ContentValues values = new ContentValues();
+        values.put("delivery_date", order.getDeliveryDate());
+        values.put("total_amount", order.getTotalAmount());
+        values.put("note", order.getNote());
+
+        int result = database.update(DatabaseHelper.TABLE_ORDERS, values,
+                "order_id = ?", new String[]{String.valueOf(order.getOrderId())});
+        return result > 0;
+    }
+
+    public boolean deleteOrder(int orderId) {
+        Order order = getOrder(orderId);
+        if (order == null || !isOrderEditable(order.getOrderDate())) {
+            return false;
+        }
+
+        database.beginTransaction();
+        try {
+            // Xóa chi tiết đơn hàng trước
+            database.delete(DatabaseHelper.TABLE_ORDER_DETAILS,
+                    "order_id = ?", new String[]{String.valueOf(orderId)});
+
+            // Sau đó xóa đơn hàng
+            int result = database.delete(DatabaseHelper.TABLE_ORDERS,
+                    "order_id = ?", new String[]{String.valueOf(orderId)});
+
+            if (result > 0) {
+                database.setTransactionSuccessful();
+                return true;
+            }
+            return false;
+        } finally {
+            database.endTransaction();
+        }
+    }
+
+    public Order getOrder(int orderId) {
+        Cursor cursor = database.query(DatabaseHelper.TABLE_ORDERS,
+                null,
+                "order_id = ?",
+                new String[]{String.valueOf(orderId)},
+                null, null, null);
+
+        Order order = null;
+        if (cursor != null && cursor.moveToFirst()) {
+            order = cursorToOrder(cursor);
+            cursor.close();
+        }
+        return order;
+    }
+
+    public List<Order> getAllOrders() {
+        List<Order> orders = new ArrayList<>();
+        Cursor cursor = database.query(DatabaseHelper.TABLE_ORDERS,
+                null, null, null, null, null, "order_date DESC");
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                orders.add(cursorToOrder(cursor));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return orders;
+    }
+
+    // Phương thức xử lý OrderDetails
+    public long addOrderDetail(OrderDetail detail) {
+        ContentValues values = new ContentValues();
+        values.put("order_id", detail.getOrderId());
+        values.put("product_id", detail.getProductId());
+        values.put("quantity", detail.getQuantity());
+        values.put("price", detail.getPrice());
+        values.put("amount", detail.getAmount());
+
+        return database.insert(DatabaseHelper.TABLE_ORDER_DETAILS, null, values);
+    }
+
+    public List<OrderDetail> getOrderDetails(int orderId) {
+        List<OrderDetail> details = new ArrayList<>();
+        Cursor cursor = database.query(DatabaseHelper.TABLE_ORDER_DETAILS,
+                null,
+                "order_id = ?",
+                new String[]{String.valueOf(orderId)},
+                null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            do {
+                details.add(cursorToOrderDetail(cursor));
+            } while (cursor.moveToNext());
+            cursor.close();
+        }
+        return details;
+    }
+
+    private boolean isOrderEditable(String orderDate) {
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            Date date = sdf.parse(orderDate);
+            Date today = new Date();
+            return sdf.format(date).equals(sdf.format(today));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private Order cursorToOrder(Cursor cursor) {
+        Order order = new Order();
+        order.setOrderId(cursor.getInt(cursor.getColumnIndexOrThrow("order_id")));
+        order.setOrderCode(cursor.getString(cursor.getColumnIndexOrThrow("order_code")));
+        order.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow("user_id")));
+        order.setOrderDate(cursor.getString(cursor.getColumnIndexOrThrow("order_date")));
+        order.setDeliveryDate(cursor.getString(cursor.getColumnIndexOrThrow("delivery_date")));
+        order.setTotalAmount(cursor.getDouble(cursor.getColumnIndexOrThrow("total_amount")));
+        order.setNote(cursor.getString(cursor.getColumnIndexOrThrow("note")));
+        return order;
+    }
+
+    private OrderDetail cursorToOrderDetail(Cursor cursor) {
+        int detailId = cursor.getInt(cursor.getColumnIndexOrThrow("detail_id"));
+        int orderId = cursor.getInt(cursor.getColumnIndexOrThrow("order_id"));
+        int productId = cursor.getInt(cursor.getColumnIndexOrThrow("product_id"));
+        int quantity = cursor.getInt(cursor.getColumnIndexOrThrow("quantity"));
+        double price = cursor.getDouble(cursor.getColumnIndexOrThrow("price"));
+
+        return new OrderDetail(detailId, orderId, productId, quantity, price);
+    }
+
+    public String generateOrderCode() {
+        String date = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(new Date());
+        Cursor cursor = database.rawQuery(
+                "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_ORDERS +
+                        " WHERE order_code LIKE 'DH" + date + "%'", null);
+
+        int sequence = 1;
+        if (cursor != null && cursor.moveToFirst()) {
+            sequence = cursor.getInt(0) + 1;
+            cursor.close();
+        }
+
+        return String.format("DH%s%03d", date, sequence);
+    }
+    public String getUserFullNameById(int userId) {
+        Cursor cursor = null;
+        try {
+            cursor = database.query(DatabaseHelper.TABLE_USERS,
+                    new String[]{"full_name"},
+                    "user_id = ?",
+                    new String[]{String.valueOf(userId)},
+                    null, null, null);
+
+            // Thêm log để kiểm tra
+            Log.d("DatabaseManager", "Getting name for userId: " + userId);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                String fullName = cursor.getString(0);
+                Log.d("DatabaseManager", "Found name: " + fullName);
+                return fullName;
+            } else {
+                Log.d("DatabaseManager", "No user found for id: " + userId);
+                return null;
+            }
+        } catch (Exception e) {
+            Log.e("DatabaseManager", "Error getting user name: " + e.getMessage());
+            return null;
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+    }
 }

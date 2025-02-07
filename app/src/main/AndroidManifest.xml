@@ -31,6 +31,12 @@
             android:name=".LoginActivity"
             android:exported="false" />
         <activity
+            android:name=".OrderListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".OrderDetailActivity"
+            android:exported="false" />
+        <activity
             android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>

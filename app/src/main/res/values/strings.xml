@@ -3,4 +3,9 @@
     <string name="product_name">Tên sản phẩm</string>
     <string name="productPrice">Giá sản phẩm</string>
     <string name="qllsp">Quản lý loại sản phẩm</string>
+    <string name="order_date_format">Ngày đặt: %s</string>
+    <string name="delivery_date_format">Ngày giao: %s</string>
+    <string name="amount_format">%,.0f VNĐ</string>
+    <string name="created_by_format">Người tạo: %s</string>
+    <string name="note_format">Ghi chú: %s</string>
 </resources>

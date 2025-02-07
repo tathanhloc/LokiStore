@@ -1,5 +1,7 @@
 package com.tathanhloc.lokistore.models;
 
+import androidx.annotation.NonNull;
+
 public class Product {
     private int id;
     private int categoryId;
@@ -78,5 +80,11 @@ public class Product {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return this.productName;
     }
 }

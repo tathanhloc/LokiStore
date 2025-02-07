@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- dialog_order.xml -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -18,30 +20,44 @@
         android:id="@+id/tvOrderCode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Mã đơn: DH001"
         android:textStyle="bold"/>
 
     <TextView
         android:id="@+id/tvOrderDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Ngày đặt: 05/02/2024"/>
+        android:layout_marginTop="8dp"/>
 
-    <EditText
-        android:id="@+id/edtDeliveryDate"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Ngày giao hàng"/>
+        android:layout_marginTop="8dp">
 
-    <EditText
-        android:id="@+id/edtNote"
+        <EditText
+            android:id="@+id/edtDeliveryDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ngày giao hàng"
+            android:focusable="false"
+            android:clickable="true"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Ghi chú"
-        android:minLines="2"/>
+        android:layout_marginTop="8dp">
+
+        <EditText
+            android:id="@+id/edtNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ghi chú"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:gravity="top"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
         android:layout_width="match_parent"
@@ -69,7 +85,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Tổng tiền: 0đ"
-        android:textStyle="bold"/>
+        android:textStyle="bold"
+        android:textSize="16sp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
