@@ -6,7 +6,8 @@
     android:orientation="vertical"
     android:padding="24dp"
     android:gravity="center"
-    android:background="@color/white">
+    android:background="@color/white"
+    >
 
     <ImageView
         android:layout_width="120dp"
@@ -24,22 +25,42 @@
         android:gravity="center"
         android:layout_marginBottom="24dp"/>
 
-    <com.google.android.material.textfield.TextInputLayout
+    <!-- Container cho phần email -->
+    <LinearLayout
+        android:id="@+id/emailContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:boxStrokeColor="@color/primary"
-        app:hintTextColor="@color/primary"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        android:orientation="vertical">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/emailEditText"
+        <!-- TextView hiển thị tên người dùng -->
+        <TextView
+            android:id="@+id/tvUsername"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Email"
-            android:inputType="textEmailAddress"
-            android:padding="16dp"/>
-    </com.google.android.material.textfield.TextInputLayout>
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/emailInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:boxStrokeColor="@color/primary"
+            app:hintTextColor="@color/primary"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/emailEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Email"
+                android:inputType="textEmailAddress"
+                android:padding="16dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
@@ -58,19 +79,49 @@
             android:inputType="textPassword"
             android:padding="16dp"/>
     </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <!-- Nút đăng nhập sinh trắc học -->
+        <ImageButton
+            android:id="@+id/btnBiometric"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/baseline_fingerprint_24"
+            android:visibility="gone"
+            android:contentDescription="Đăng nhập sinh trắc học"/>
+
+        <!-- Nút đăng nhập tài khoản khác -->
+        <Button
+            android:id="@+id/btnSwitchAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đăng nhập tài khoản khác"
+            android:layout_marginStart="16dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:visibility="gone"/>
+    </LinearLayout>
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:visibility="gone"/>
-<com.google.android.material.checkbox.MaterialCheckBox
-    android:id="@+id/rememberMeCheckBox"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="Lưu mật khẩu"
-    android:layout_marginBottom="24dp"
-    android:layout_gravity="end"/>
+
+    <com.google.android.material.checkbox.MaterialCheckBox
+        android:id="@+id/rememberMeCheckBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lưu mật khẩu"
+        android:layout_marginBottom="24dp"
+        android:layout_gravity="end"/>
 
     <TextView
         android:id="@+id/forgotPasswordText"
@@ -93,6 +144,7 @@
         app:cornerRadius="8dp"
         android:layout_marginBottom="16dp"/>
 
+    <!-- Phần đăng nhập khác giữ nguyên -->
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

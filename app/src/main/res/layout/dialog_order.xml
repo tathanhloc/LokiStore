@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- dialog_order.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:minWidth="320dp">
 
     <TextView
         android:id="@+id/dialogTitle"
@@ -18,20 +18,22 @@
 
     <TextView
         android:id="@+id/tvOrderCode"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"/>
+        android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textStyle="bold"
+    android:textSize="16sp"/>
 
     <TextView
         android:id="@+id/tvOrderDate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"/>
+        android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:textSize="16sp"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="16dp">
 
         <EditText
             android:id="@+id/edtDeliveryDate"
@@ -39,14 +41,15 @@
             android:layout_height="wrap_content"
             android:hint="Ngày giao hàng"
             android:focusable="false"
-            android:clickable="true"/>
+            android:clickable="true"
+            android:padding="12dp"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp">
+        android:layout_marginTop="16dp">
 
         <EditText
             android:id="@+id/edtNote"
@@ -55,7 +58,8 @@
             android:hint="Ghi chú"
             android:inputType="textMultiLine"
             android:minLines="2"
-            android:gravity="top"/>
+            android:gravity="top"
+            android:padding="12dp"/>
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -64,29 +68,33 @@
         android:layout_height="wrap_content"
         android:text="Chi tiết đơn hàng"
         android:textStyle="bold"
-        android:layout_marginTop="16dp"/>
+        android:textSize="16sp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvOrderDetails"
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:layout_marginTop="8dp"/>
+    android:layout_marginTop="8dp"/>
 
     <Button
         android:id="@+id/btnAddItem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Thêm sản phẩm"
-        android:layout_marginTop="8dp"/>
+        android:layout_marginTop="16dp"
+        android:padding="12dp"/>
 
     <TextView
         android:id="@+id/tvTotalAmount"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Tổng tiền: 0đ"
         android:textStyle="bold"
-        android:textSize="16sp"/>
+        android:textSize="16sp"
+        android:gravity="end"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -100,13 +108,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Hủy"
+            android:layout_marginEnd="8dp"
             style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
         <Button
             android:id="@+id/btnSave"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Lưu"
-            android:layout_marginStart="8dp"/>
+            android:text="Lưu"/>
     </LinearLayout>
 </LinearLayout>

@@ -9,6 +9,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -17,9 +19,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -52,6 +55,7 @@ public class OrderDialog extends Dialog {
     private DatabaseManager dbManager;
     private SimpleDateFormat sdf;
     private OnOrderSaveListener listener;
+    private AlertDialog dialog;
 
     public interface OnOrderSaveListener {
         void onOrderSave(Order order, List<OrderDetail> details);
@@ -63,6 +67,12 @@ public class OrderDialog extends Dialog {
         this.listener = listener;
         this.dbManager = new DatabaseManager(context);
         this.sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+
+        Window window = getWindow();
+        if (window != null) {
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     @Override
@@ -88,7 +98,16 @@ public class OrderDialog extends Dialog {
         btnSave = findViewById(R.id.btnSave);
 
         // Setup RecyclerView
-        rvOrderDetails.setLayoutManager(new LinearLayoutManager(getContext()));
+        rvOrderDetails.setLayoutManager(new LinearLayoutManager(getContext()) {
+            @Override
+            public boolean canScrollVertically() {
+                return true;
+            }
+        });
+        rvOrderDetails.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(250)  // Điều chỉnh chiều cao tùy ý
+        ));
         orderDetails = new ArrayList<>();
         detailAdapter = new OrderDetailDialogAdapter(
                 getContext(),  // Thêm context vào đây
@@ -102,6 +121,10 @@ public class OrderDialog extends Dialog {
         rvOrderDetails.setAdapter(detailAdapter);
     }
 
+    private int dpToPx(int dp) {
+        float density = getContext().getResources().getDisplayMetrics().density;
+        return Math.round((float) dp * density);
+    }
     private void setupListeners() {
         btnCancel.setOnClickListener(v -> dismiss());
         btnSave.setOnClickListener(v -> saveOrder());
@@ -148,80 +171,90 @@ public class OrderDialog extends Dialog {
 
     private void showAddItemDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_order_item, null);
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_product_selection, null);
+        builder.setView(view);
 
-        AutoCompleteTextView spinnerProduct = view.findViewById(R.id.spinnerProduct);
-        EditText edtQuantity = view.findViewById(R.id.edtQuantity);
-        TextView tvPrice = view.findViewById(R.id.tvPrice);
-        TextView tvAmount = view.findViewById(R.id.tvAmount);
+        RecyclerView rvProducts = view.findViewById(R.id.rvProducts);
+        EditText edtSearch = view.findViewById(R.id.edtSearch);
 
+        // Setup RecyclerView
+        rvProducts.setLayoutManager(new GridLayoutManager(getContext(), 2));
         List<Product> products = dbManager.getAllProducts();
-        ArrayAdapter<Product> adapter = new ArrayAdapter<>(getContext(),
-                android.R.layout.simple_spinner_item, products);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerProduct.setAdapter(adapter);
 
-        Product[] selectedProduct = new Product[1];
-        spinnerProduct.setOnItemClickListener((parent, view1, position, id) -> {
-            selectedProduct[0] = products.get(position);
-            tvPrice.setText(String.format("Đơn giá: %,.0f VNĐ", selectedProduct[0].getPrice()));
-
-            // Tính thành tiền nếu đã nhập số lượng
-            String quantityStr = edtQuantity.getText().toString();
-            if (!quantityStr.isEmpty()) {
-                int quantity = Integer.parseInt(quantityStr);
-                double amount = selectedProduct[0].getPrice() * quantity;
-                tvAmount.setText(String.format("Thành tiền: %,.0f VNĐ", amount));
-            }
+        ProductSelectionAdapter adapter = new ProductSelectionAdapter(getContext(), products, product -> {
+            // Khi sản phẩm được chọn
+            showQuantityDialog(product);
+            dialog.dismiss();
         });
 
-        edtQuantity.addTextChangedListener(new TextWatcher() {
+        rvProducts.setAdapter(adapter);
+
+        // Setup search
+        edtSearch.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (selectedProduct[0] != null && !s.toString().isEmpty()) {
-                    try {
-                        int quantity = Integer.parseInt(s.toString());
-                        double amount = selectedProduct[0].getPrice() * quantity;
-                        tvAmount.setText(String.format("Thành tiền: %,.0f VNĐ", amount));
-                    } catch (NumberFormatException e) {
-                        tvAmount.setText("Thành tiền: 0 VNĐ");
-                    }
-                }
+                adapter.filter(s.toString());
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
         });
 
-        builder.setView(view)
-                .setTitle("Thêm sản phẩm")
-                .setPositiveButton("Thêm", (dialog, which) -> {
-                    if (selectedProduct[0] == null) {
-                        Toast.makeText(getContext(), "Vui lòng chọn sản phẩm", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        dialog = builder.create();
+        dialog.show();
+    }
+    private void showQuantityDialog(Product product) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.dialog_quantity_input, null);
+        builder.setView(view);
 
-                    String quantityStr = edtQuantity.getText().toString();
-                    if (quantityStr.isEmpty()) {
-                        Toast.makeText(getContext(), "Vui lòng nhập số lượng", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        EditText edtQuantity = view.findViewById(R.id.edtQuantity);
+        TextView tvProductName = view.findViewById(R.id.tvProductName);
+        TextView tvPrice = view.findViewById(R.id.tvPrice);
 
-                    int quantity = Integer.parseInt(quantityStr);
-                    OrderDetail detail = new OrderDetail();
-                    detail.setProductId(selectedProduct[0].getId());
-                    detail.setQuantity(quantity);
-                    detail.setPrice(selectedProduct[0].getPrice());
+        tvProductName.setText(product.getProductName());
+        tvPrice.setText(String.format("Đơn giá: %,.0f VNĐ", product.getPrice()));
 
-                    orderDetails.add(detail);
-                    detailAdapter.notifyItemInserted(orderDetails.size() - 1);
-                    updateTotalAmount();
-                })
-                .setNegativeButton("Hủy", null)
-                .show();
+        builder.setPositiveButton("Thêm", (dialog, which) -> {
+            String quantityStr = edtQuantity.getText().toString();
+            if (!quantityStr.isEmpty()) {
+                int quantity = Integer.parseInt(quantityStr);
+                addProductToOrder(product, quantity);
+            }
+        });
+        builder.setNegativeButton("Hủy", null);
+
+        builder.show();
+    }
+    private void addProductToOrder(Product product, int quantity) {
+        // Kiểm tra xem sản phẩm đã tồn tại trong giỏ hàng chưa
+        boolean productExists = false;
+        for (OrderDetail existingDetail : orderDetails) {
+            if (existingDetail.getProductId() == product.getId()) {
+                // Nếu sản phẩm đã tồn tại, cập nhật số lượng
+                int newQuantity = existingDetail.getQuantity() + quantity;
+                existingDetail.setQuantity(newQuantity);
+                productExists = true;
+                detailAdapter.notifyDataSetChanged();
+                break;
+            }
+        }
+
+        // Nếu sản phẩm chưa tồn tại, thêm mới
+        if (!productExists) {
+            OrderDetail detail = new OrderDetail();
+            detail.setProductId(product.getId());
+            detail.setQuantity(quantity);
+            detail.setPrice(product.getPrice());
+            orderDetails.add(detail);
+            detailAdapter.notifyItemInserted(orderDetails.size() - 1);
+        }
+
+        // Cập nhật tổng tiền
+        updateTotalAmount();
     }
 
     private void updateTotalAmount() {
@@ -249,8 +282,9 @@ public class OrderDialog extends Dialog {
             order.setOrderCode(dbManager.generateOrderCode());
             order.setOrderDate(sdf.format(new Date()));
             order.setUserId(getCurrentUserId());
+            order.setStatus("PENDING"); // Set trạng thái mặc định cho đơn hàng mới
         } else {
-            order = currentOrder;
+            order = currentOrder; // Giữ nguyên thông tin cũ của đơn hàng
         }
 
         order.setDeliveryDate(edtDeliveryDate.getText().toString());

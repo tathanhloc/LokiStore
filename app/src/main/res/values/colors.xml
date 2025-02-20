@@ -12,4 +12,7 @@
     <color name="gray_light">#DDDDDD</color>
     <color name="gray_dark">#555555</color>
     <color name="red">#FF0000</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorPrimaryLight">#C5CAE9</color>
 </resources>

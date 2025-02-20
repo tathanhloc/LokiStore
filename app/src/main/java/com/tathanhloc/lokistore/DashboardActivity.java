@@ -20,6 +20,7 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView userNameText;      // Hiển thị tên người dùng
     private CardView cardStatistics;    // Thống kê
     private CardView cardLogout;        // Đăng xuất
+    private CardView cardSettings;      // Cài đặt
 
     // Session manager để quản lý phiên đăng nhập
     private SessionManager sessionManager;
@@ -53,6 +54,7 @@ public class DashboardActivity extends AppCompatActivity {
         cardStatistics = findViewById(R.id.cardStats);
         cardLogout = findViewById(R.id.cardLogout);
         userNameText = findViewById(R.id.userNameText);
+        cardSettings = findViewById(R.id.cardSettings);
     }
 
     private void displayUserInfo() {
@@ -70,6 +72,7 @@ public class DashboardActivity extends AppCompatActivity {
         setupOrdersCard();
         setupStatisticsCard();
         setupLogoutCard();
+        setupSettingsCard();
     }
 
     private void setupProductsCard() {
@@ -179,6 +182,15 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
+    }
+
+    private void setupSettingsCard() {
+        cardSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(DashboardActivity.this, SettingsActivity.class));
+            }
+        });
     }
 
     @Override

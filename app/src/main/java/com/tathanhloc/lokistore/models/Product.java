@@ -10,12 +10,15 @@ public class Product {
     private double price;
     private String description;
     private String imagePath;
+    private int isActive = 1;
+
 
     public Product() {
     }
 
-    public Product(int id, int categoryId, String productCode, String productName,
-                   double price, String description, String imagePath) {
+
+
+    public Product(int id, int categoryId, String productCode, String productName, double price, String description, String imagePath, int isActive) {
         this.id = id;
         this.categoryId = categoryId;
         this.productCode = productCode;
@@ -23,6 +26,7 @@ public class Product {
         this.price = price;
         this.description = description;
         this.imagePath = imagePath;
+        this.isActive = isActive;
     }
 
     // Getters and Setters
@@ -80,6 +84,14 @@ public class Product {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public int getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(int isActive) {
+        this.isActive = isActive;
     }
 
     @NonNull

@@ -4,14 +4,19 @@ public class Category {
     private int id;
     private String categoryCode;
     private String categoryName;
+    private int isActive;
+
 
     public Category() {
     }
 
-    public Category(int id, String categoryCode, String categoryName) {
+
+
+    public Category(int id, String categoryCode, String categoryName, int isActive) {
         this.id = id;
         this.categoryCode = categoryCode;
         this.categoryName = categoryName;
+        this.isActive = isActive;
     }
 
     public int getId() {
@@ -36,6 +41,14 @@ public class Category {
 
     public void setCategoryName(String categoryName) {
         this.categoryName = categoryName;
+    }
+
+    public int getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(int isActive) {
+        this.isActive = isActive;
     }
 
     @Override

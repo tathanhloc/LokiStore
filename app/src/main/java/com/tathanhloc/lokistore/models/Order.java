@@ -8,12 +8,14 @@ public class Order {
     private String deliveryDate;
     private double totalAmount;
     private String note;
+    private String status;
 
     public Order() {
+        this.status = "PENDING";
     }
 
     public Order(int orderId, String orderCode, int userId, String orderDate,
-                 String deliveryDate, double totalAmount, String note) {
+                 String deliveryDate, double totalAmount, String note, String status) {
         this.orderId = orderId;
         this.orderCode = orderCode;
         this.userId = userId;
@@ -21,7 +23,13 @@ public class Order {
         this.deliveryDate = deliveryDate;
         this.totalAmount = totalAmount;
         this.note = note;
+        this.status = status != null ? status : "PENDING";
     }
+    public Order(int orderId, String orderCode, int userId, String orderDate,
+                 String deliveryDate, double totalAmount, String note) {
+        this(orderId, orderCode, userId, orderDate, deliveryDate, totalAmount, note, "PENDING");
+    }
+
 
     // Getters and Setters
     public int getOrderId() {
@@ -78,5 +86,13 @@ public class Order {
 
     public void setNote(String note) {
         this.note = note;
+    }
+    // Thêm getter và setter
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

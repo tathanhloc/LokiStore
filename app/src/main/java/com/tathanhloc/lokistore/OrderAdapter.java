@@ -2,11 +2,15 @@ package com.tathanhloc.lokistore;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +31,8 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
 
     public interface OnOrderClickListener {
         void onOrderClick(Order order);
+        void onOrderEdit(Order order);
+        void onOrderDelete(Order order);
     }
 
     public OrderAdapter(Context context, List<Order> orders, OnOrderClickListener listener) {
@@ -43,37 +49,87 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
         return new OrderViewHolder(view);
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
-        Order order = orders.get(position);
-        // Sửa dòng này
-        String userName = dbManager.getUserFullNameById(order.getUserId());
+@Override
+public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
+    Order order = orders.get(position);
+    String userName = dbManager.getUserFullNameById(order.getUserId());
 
-        holder.tvOrderCode.setText(order.getOrderCode());
-        holder.tvOrderDate.setText("Ngày đặt: " + order.getOrderDate());
-        holder.tvDeliveryDate.setText("Ngày giao: " + order.getDeliveryDate());
-        holder.tvTotalAmount.setText(String.format("%,.0f VNĐ", order.getTotalAmount()));
-        holder.tvCreatedBy.setText("Người tạo: " + (userName != null ? userName : "Không xác định"));
+    holder.tvOrderCode.setText(order.getOrderCode());
+    holder.tvOrderDate.setText("Ngày đặt: " + order.getOrderDate());
+    holder.tvDeliveryDate.setText("Ngày giao: " + order.getDeliveryDate());
+    holder.tvTotalAmount.setText(String.format("%,.0f VNĐ", order.getTotalAmount()));
+    holder.tvCreatedBy.setText("Người tạo: " + (userName != null ? userName : "Không xác định"));
 
-        if (order.getNote() != null && !order.getNote().isEmpty()) {
-            holder.tvNote.setText("Ghi chú: " + order.getNote());
-            holder.tvNote.setVisibility(View.VISIBLE);
-        } else {
-            holder.tvNote.setVisibility(View.GONE);
-        }
-
-        // Kiểm tra xem đơn hàng có thể chỉnh sửa không
-        boolean isEditable = isOrderEditable(order.getOrderDate());
-        holder.ivEditStatus.setImageResource(isEditable ?
-                R.drawable.ic_edit_enabled : R.drawable.ic_edit_disabled);
-
-        holder.cardView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onOrderClick(order);
-            }
-        });
+    if (order.getNote() != null && !order.getNote().isEmpty()) {
+        holder.tvNote.setText("Ghi chú: " + order.getNote());
+        holder.tvNote.setVisibility(View.VISIBLE);
+    } else {
+        holder.tvNote.setVisibility(View.GONE);
     }
 
+    boolean isEditable = isOrderEditable(order.getOrderDate());
+    holder.ivEditStatus.setImageResource(isEditable ? R.drawable.ic_edit_enabled : R.drawable.ic_edit_disabled);
+
+    holder.cardView.setOnClickListener(v -> {
+        if (listener != null) {
+            listener.onOrderClick(order);
+        }
+    });
+
+    String status = order.getStatus();
+    if ("COMPLETED".equals(status)) {
+        holder.tvStatus.setText("Hoàn thành");
+        holder.tvStatus.setTextColor(Color.GREEN);
+    } else {
+        holder.tvStatus.setText("Đang xử lý");
+        holder.tvStatus.setTextColor(Color.BLUE);
+    }
+
+    if ("COMPLETED".equals(status)) {
+        holder.tvStatus.setText("Hoàn thành");
+        holder.tvStatus.setTextColor(Color.GREEN);
+    } else {
+        holder.tvStatus.setText("Đang xử lý");
+        holder.tvStatus.setTextColor(Color.BLUE);
+    }
+
+    holder.cardView.setOnLongClickListener(v -> {
+        showPopupMenu(v, order);
+        return true;
+    });
+}
+    private void showPopupMenu(View view, Order order) {
+        PopupMenu popup = new PopupMenu(context, view);
+        popup.inflate(R.menu.menu_order_item);
+
+        // Kiểm tra điều kiện để enable/disable menu items
+        boolean isEditable = isOrderEditable(order.getOrderDate());
+        popup.getMenu().findItem(R.id.menu_edit).setEnabled(isEditable);
+        popup.getMenu().findItem(R.id.menu_delete).setEnabled(isEditable);
+
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.menu_edit) {
+                if (isEditable) {
+                    if (listener != null) listener.onOrderEdit(order);
+                } else {
+                    Toast.makeText(context, "Không thể chỉnh sửa đơn hàng trong quá khứ",
+                            Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            } else if (item.getItemId() == R.id.menu_delete) {
+                if (isEditable) {
+                    if (listener != null) listener.onOrderDelete(order);
+                } else {
+                    Toast.makeText(context, "Không thể xóa đơn hàng trong quá khứ",
+                            Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+            return false;
+        });
+
+        popup.show();
+    }
     @Override
     public int getItemCount() {
         return orders.size();
@@ -104,6 +160,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
         TextView tvTotalAmount;
         TextView tvCreatedBy;
         TextView tvNote;
+        TextView tvStatus;
         ImageView ivEditStatus;
 
         OrderViewHolder(View view) {
@@ -115,6 +172,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.OrderViewHol
             tvTotalAmount = view.findViewById(R.id.tvTotalAmount);
             tvCreatedBy = view.findViewById(R.id.tvCreatedBy);
             tvNote = view.findViewById(R.id.tvNote);
+            tvStatus = view.findViewById(R.id.tvStatus);
             ivEditStatus = view.findViewById(R.id.ivEditStatus);
         }
     }

@@ -1,9 +1,12 @@
 package com.tathanhloc.lokistore;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
@@ -17,28 +20,22 @@ import com.tathanhloc.lokistore.models.OrderDetail;
 import java.util.List;
 
 public class OrderDetailActivity extends AppCompatActivity {
-    private TextView tvOrderCode, tvOrderDate, tvDeliveryDate, tvTotalAmount, tvNote, tvCreatedBy;
+    private TextView tvOrderCode, tvOrderDate, tvDeliveryDate, tvTotalAmount, tvNote, tvCreatedBy, tvStatus;
     private RecyclerView rvOrderDetails;
-    private OrderDetailAdapter detailAdapter;  // Sử dụng OrderDetailAdapter
+    private OrderDetailAdapter detailAdapter;
     private DatabaseManager dbManager;
     private Order currentOrder;
-
+    private Button btnCompleteOrder;
+    private LinearLayout bottomButtonContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order_detail);
 
-        // Khởi tạo DatabaseManager
         dbManager = new DatabaseManager(this);
-
-        // Khởi tạo views
         initViews();
 
-        // Thiết lập toolbar
-        setupToolbar();
-
-        // Lấy orderId từ intent và load dữ liệu
         int orderId = getIntent().getIntExtra("ORDER_ID", -1);
         if (orderId != -1) {
             loadOrderDetails(orderId);
@@ -56,6 +53,11 @@ public class OrderDetailActivity extends AppCompatActivity {
         tvNote = findViewById(R.id.tvNote);
         tvCreatedBy = findViewById(R.id.tvCreatedBy);
         rvOrderDetails = findViewById(R.id.rvOrderDetails);
+        tvStatus = findViewById(R.id.tvStatus);
+        btnCompleteOrder = findViewById(R.id.btnCompleteOrder);
+        bottomButtonContainer = findViewById(R.id.bottomButtonContainer);
+
+        btnCompleteOrder.setOnClickListener(v -> showCompleteOrderDialog());
 
         // Thiết lập RecyclerView
         rvOrderDetails.setLayoutManager(new LinearLayoutManager(this));
@@ -63,15 +65,36 @@ public class OrderDetailActivity extends AppCompatActivity {
         rvOrderDetails.setAdapter(detailAdapter);
     }
 
-    private void setupToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Chi tiết đơn hàng");
-        }
+    private void showCompleteOrderDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận hoàn thành")
+                .setMessage("Bạn có chắc chắn muốn xác nhận hoàn thành đơn hàng này không?")
+                .setPositiveButton("Xác nhận", (dialog, which) -> {
+                    completeOrder();
+                })
+                .setNegativeButton("Hủy", null)
+                .show();
     }
 
+
+    private void completeOrder() {
+        if (currentOrder != null) {
+            if (dbManager.updateOrderStatus(currentOrder.getOrderId(), "COMPLETED")) {
+                // Cập nhật lại đối tượng currentOrder với trạng thái mới
+                currentOrder = dbManager.getOrder(currentOrder.getOrderId());
+
+                // Gọi displayOrderInfo để cập nhật UI
+                displayOrderInfo();
+
+                // Load lại chi tiết đơn hàng
+                loadOrderItems(currentOrder.getOrderId());
+
+                Toast.makeText(this, "Đã cập nhật trạng thái đơn hàng", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Không thể cập nhật trạng thái đơn hàng", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
 
     private void loadOrderDetails(int orderId) {
         // Load thông tin đơn hàng
@@ -84,14 +107,21 @@ public class OrderDetailActivity extends AppCompatActivity {
 
     private void displayOrderInfo() {
         if (currentOrder != null) {
-            // Log để kiểm tra thông tin
-            Log.d("OrderDetail", "OrderId: " + currentOrder.getOrderId());
-            Log.d("OrderDetail", "UserId: " + currentOrder.getUserId());
-
             tvOrderCode.setText("Mã đơn: " + currentOrder.getOrderCode());
             tvOrderDate.setText("Ngày đặt: " + currentOrder.getOrderDate());
             tvDeliveryDate.setText("Ngày giao: " + currentOrder.getDeliveryDate());
             tvTotalAmount.setText(String.format("Tổng tiền: %,.0f VNĐ", currentOrder.getTotalAmount()));
+
+            // Hiển thị trạng thái
+            if ("COMPLETED".equals(currentOrder.getStatus())) {
+                tvStatus.setText("Trạng thái: Đã hoàn thành");
+                tvStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+                bottomButtonContainer.setVisibility(View.GONE);
+            } else {
+                tvStatus.setText("Trạng thái: Đang xử lý");
+                tvStatus.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+                bottomButtonContainer.setVisibility(View.VISIBLE);
+            }
 
             // Xử lý phần người tạo
             int userId = currentOrder.getUserId();

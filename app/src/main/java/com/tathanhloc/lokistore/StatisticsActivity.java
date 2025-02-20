@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -17,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -66,7 +69,6 @@ public class StatisticsActivity extends AppCompatActivity {
 
         // Khởi tạo views và setup
         initViews();
-        setupToolbar();
         setupListeners();
 
         // Thiết lập ngày mặc định (từ đầu tháng đến hiện tại)
@@ -119,16 +121,11 @@ public class StatisticsActivity extends AppCompatActivity {
         radioGroupTimeFilter = findViewById(R.id.radioGroupTimeFilter);
         btnStartDate = findViewById(R.id.btnStartDate);
         btnEndDate = findViewById(R.id.btnEndDate);
+        RecyclerView rvTopProducts = findViewById(R.id.rvTopProducts);
+        rvTopProducts.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    private void setupToolbar() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle("Thống kê");
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-    }
+
 
     private void loadStatistics() {
         // Tải thống kê tổng quan
@@ -288,6 +285,10 @@ public class StatisticsActivity extends AppCompatActivity {
             updateRevenueChart();
             updateCategoryChart();
 
+            // Add this line to load top products
+            loadTopProducts();
+            loadRevenueByProduct();
+
         } catch (Exception e) {
             Log.e("Statistics", "Error updating statistics", e);
             Toast.makeText(this, "Lỗi khi cập nhật dữ liệu: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -378,5 +379,68 @@ public class StatisticsActivity extends AppCompatActivity {
         pieChart.getLegend().setOrientation(Legend.LegendOrientation.VERTICAL);
 
         pieChart.invalidate(); // Refresh biểu đồ
+    }
+    private void loadTopProducts() {
+        Log.d("StatisticsActivity", "Loading Top Products");
+
+        List<CategoryStatistics> topProducts = dbManager.getTopProductsByRevenue(5);
+
+        Log.d("StatisticsActivity", "Top Products Count: " + (topProducts != null ? topProducts.size() : "null"));
+
+        RecyclerView rvTopProducts = findViewById(R.id.rvTopProducts);
+        rvTopProducts.setLayoutManager(new LinearLayoutManager(this));
+
+        if (topProducts != null && !topProducts.isEmpty()) {
+            TopProductsAdapter adapter = new TopProductsAdapter(topProducts);
+            rvTopProducts.setAdapter(adapter);
+            rvTopProducts.setVisibility(View.VISIBLE);
+            findViewById(R.id.cardTopProducts).setVisibility(View.VISIBLE);
+
+            // Additional logging
+            for (CategoryStatistics product : topProducts) {
+                Log.d("StatisticsActivity", "Product: " + product.getCategoryName() +
+                        ", Revenue: " + product.getRevenue());
+            }
+        } else {
+            rvTopProducts.setVisibility(View.GONE);
+
+            TextView tvNoProducts = findViewById(R.id.tvNoProducts);
+            if (tvNoProducts != null) {
+                tvNoProducts.setVisibility(View.VISIBLE);
+                tvNoProducts.setText("Không có sản phẩm nào");
+            }
+        }
+    }
+    private void loadRevenueByProduct() {
+
+        Log.d("StatisticsActivity", "Loading Revenue by Product");
+
+        List<CategoryStatistics> revenueProducts = dbManager.getRevenueByProduct();
+
+        Log.d("StatisticsActivity", "Revenue Products Count: " + (revenueProducts != null ? revenueProducts.size() : "null"));
+
+        RecyclerView rvRevenueProducts = findViewById(R.id.rvRevenueProducts);
+        rvRevenueProducts.setLayoutManager(new LinearLayoutManager(this));
+
+        if (revenueProducts != null && !revenueProducts.isEmpty()) {
+            RevenueProductsAdapter adapter = new RevenueProductsAdapter(revenueProducts);
+            rvRevenueProducts.setAdapter(adapter);
+            rvRevenueProducts.setVisibility(View.VISIBLE);
+            findViewById(R.id.cardRevenueProducts).setVisibility(View.VISIBLE);
+
+            // Additional logging
+            for (CategoryStatistics product : revenueProducts) {
+                Log.d("StatisticsActivity", "Product: " + product.getCategoryName() +
+                        ", Revenue: " + product.getRevenue());
+            }
+        } else {
+            rvRevenueProducts.setVisibility(View.GONE);
+
+            TextView tvNoRevenueProducts = findViewById(R.id.tvNoRevenueProducts);
+            if (tvNoRevenueProducts != null) {
+                tvNoRevenueProducts.setVisibility(View.VISIBLE);
+                tvNoRevenueProducts.setText("Không có sản phẩm nào");
+            }
+        }
     }
 }

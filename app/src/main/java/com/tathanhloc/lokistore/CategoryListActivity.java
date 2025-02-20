@@ -61,9 +61,12 @@ public class CategoryListActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        ItemTouchHelper.SimpleCallback swipeCallback = new ItemTouchHelper.SimpleCallback(0,
+                ItemTouchHelper.LEFT | ItemTouchHelper.RIGHT) { // Thêm RIGHT swipe
             @Override
-            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            public boolean onMove(@NonNull RecyclerView recyclerView,
+                                  @NonNull RecyclerView.ViewHolder viewHolder,
+                                  @NonNull RecyclerView.ViewHolder target) {
                 return false;
             }
 
@@ -72,18 +75,26 @@ public class CategoryListActivity extends AppCompatActivity {
                 final int position = viewHolder.getAdapterPosition();
                 final Category category = adapter.getCategoryAt(position);
 
-                new AlertDialog.Builder(CategoryListActivity.this)
-                        .setTitle("Xác nhận xóa")
-                        .setMessage("Bạn có chắc muốn xóa danh mục này?")
-                        .setPositiveButton("Xóa", (dialog, which) -> {
-                            dbManager.deleteCategory(category.getId());
-                            adapter.removeItem(position);
-                            Toast.makeText(CategoryListActivity.this, "Đã xóa danh mục", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton("Hủy", (dialog, which) -> {
-                            adapter.notifyItemChanged(position);
-                        })
-                        .show();
+                if (direction == ItemTouchHelper.LEFT) {
+                    // Xử lý xóa
+                    new AlertDialog.Builder(CategoryListActivity.this)
+                            .setTitle("Xác nhận xóa")
+                            .setMessage("Bạn có chắc muốn xóa danh mục này?")
+                            .setPositiveButton("Xóa", (dialog, which) -> {
+                                dbManager.deleteCategory(category.getId());
+                                adapter.removeItem(position);
+                                Toast.makeText(CategoryListActivity.this,
+                                        "Đã xóa danh mục", Toast.LENGTH_SHORT).show();
+                            })
+                            .setNegativeButton("Hủy", (dialog, which) -> {
+                                adapter.notifyItemChanged(position);
+                            })
+                            .show();
+                } else if (direction == ItemTouchHelper.RIGHT) {
+                    // Xử lý sửa
+                    showCategoryDialog(category);
+                    adapter.notifyItemChanged(position); // Restore item view
+                }
             }
 
             @Override
@@ -93,11 +104,15 @@ public class CategoryListActivity extends AppCompatActivity {
                 if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
                     View itemView = viewHolder.itemView;
                     Paint paint = new Paint();
-                    paint.setColor(Color.RED);
 
-                    if (dX < 0) {  // Swipe left
+                    if (dX < 0) {  // Swipe left (Delete)
+                        paint.setColor(Color.RED);
                         c.drawRect((float) itemView.getRight() + dX, (float) itemView.getTop(),
                                 (float) itemView.getRight(), (float) itemView.getBottom(), paint);
+                    } else if (dX > 0) {  // Swipe right (Edit)
+                        paint.setColor(Color.BLUE);
+                        c.drawRect((float) itemView.getLeft(), (float) itemView.getTop(),
+                                dX, (float) itemView.getBottom(), paint);
                     }
                 }
                 super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
@@ -162,7 +177,7 @@ public class CategoryListActivity extends AppCompatActivity {
     private String generateCategoryCode() {
         // Lấy số lượng category hiện tại + 1
         int count = dbManager.getCategoryCount() + 1;
-        return String.format("LOKI%03d", count);  // Format: DM001, DM002, ...
+        return String.format("LOKI%03d", count);
     }
 
     @Override

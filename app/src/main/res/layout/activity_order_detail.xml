@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- activity_order_detail.xml -->
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"    >
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"/>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -47,6 +42,13 @@
                         android:textColor="@color/primary"/>
 
                     <TextView
+                        android:id="@+id/tvStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textStyle="bold"/>
+
+                    <TextView
                         android:id="@+id/tvOrderDate"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -70,9 +72,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
                         android:textStyle="italic"/>
-
                 </LinearLayout>
-
             </androidx.cardview.widget.CardView>
 
             <!-- Order Details Title -->
@@ -101,9 +101,24 @@
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/black"/>
-
         </LinearLayout>
-
     </androidx.core.widget.NestedScrollView>
 
+    <!-- Bottom Button Container -->
+    <LinearLayout
+        android:id="@+id/bottomButtonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:background="@android:color/white"
+        android:elevation="8dp">
+
+        <Button
+            android:id="@+id/btnCompleteOrder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Xác nhận hoàn thành đơn hàng"
+            android:textColor="@android:color/white"/>
+    </LinearLayout>
 </LinearLayout>
